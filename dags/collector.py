@@ -6,8 +6,12 @@ from airflow.operators.python_operator import PythonOperator
 from airflow import DAG
 from datetime import datetime,timedelta
 from decouple import config
-import log_parser
+from log_parser import parsed_lines
+import awswrangler as wr
+import pandas as pd
 import dill
+import boto3
+import pandas
 import os
 
 
@@ -30,38 +34,45 @@ default_args={
 
 dag=DAG('data_collection',default_args=default_args,schedule_interval=timedelta(1))
 
+def connect():
+    access_key,secret_key=config("AWS_ACCESS_KEY",cast=str),config("AWS_SECRET_KEY",cast=str)
+    default_region=config("DEFAULT_REGION")
 
-# bash_command="sh {{params.rawdata_folder}}/merge_log.sh {{params.rawdata_folder}}"
-
-# rawdata_folder=os.path.join(dag_path,'raw_data','transaction')
-
-def test(file_path,s3_bucket,bucket_folder,ti):
-    data=ti.xcom_pull(key='df',task_ids=['s3_check'])
-    print(data)
-    print(file_path)
-    print("yes")
-
-def test2(ti):
-    value='david'
-    ti.xcom_push(key='david',value=value)
-
-def test3():
-    print("s")
-
-s3_connection=PythonOperator(
-    task_id='s3_check',
-    python_callable=test2,
-    dag=dag) 
+    session=boto3.Session(aws_access_key_id=access_key,
+                            aws_secret_access_key=secret_key,
+                            region_name=default_region)
+    return session
+    
 
 
+start=BashOperator(
+    task_id='start_task',
+    bash_command='echo Data pipeline is about to start',
+    dag=dag)
+
+    
+def make_path(bucket,dt,folder=None):
+    folder=folder if folder else 'student_info'
+    path='s3://{}/{}/dt={}/student_file.parquet'.format(bucket,folder,dt)
+    return path 
+
+def save_to_s3(task,s3_bucket,bucket_folder,ti):
+    records=ti.xcom_pull(key=task,task_ids=[f'parse_log_{task}'])
+    session=connect()
+    dt=datetime.datetime.utcnow().strftime('%Y-%m-%d')
+    path=make_path(s3_bucket,dt,bucket_folder)
+    
+    #make dataframe 
+    records=pd.DataFrame(records)
+    wr.s3.to_parquet(pd.DataFrame(records),path=path,boto3_session=session)
+    print("Data has successfully been fetched to {}".format(path))
 
 
 
-success=PythonOperator(
-        task_id='final',
-        python_callable=test3,
-        dag=dag
-    )
+success=BashOperator(
+    task_id='final_task',
+    bash_command='echo Datapipe line has been sucessfully established',
+    dag=dag)
 
 tasks=['transaction','login']
 
@@ -74,19 +85,27 @@ for task in tasks:
         bash_command=bash_command,
         params={'rawdata_folder':rawdata_folder,'file_name':task},
         dag=dag)
-
-    file_path=os.path.join(rawdata_folder,'result.text')
-    save_to_s3=PythonOperator(
+    
+    #def parse_log(file_path,xcom_key):
+    file_path=os.path.join(rawdata_folder,f'{task}.txt')
+    parsed=PythonOperator(
         task_id=f'parse_log_{task}',
-        python_callable=test,
+        python_callable=parsed_lines,
         op_kwargs={
             'file_path':file_path,
+            'xcom_key':task},
+        dag=dag)
+   
+    store_data=PythonOperator(
+        task_id=f'store_{task}',
+        python_callable=save_to_s3,
+        op_kwargs={
+            'task':task,
             's3_bucket':config("S3_BUCKET"),
-            'bucket_folder':'stduent_info'
-        },
-        dag=dag
-    )
-    s3_connection >> merged >> save_to_s3 >> success
+            's3_folder':task},
+        dag=dag)
+
+    start>> merged >> parsed >>store_data>> success
 
 
 
