@@ -1,0 +1,1 @@
+for file in $1/*.log;do cat "$file">>$1/result.txt;echo "" >>$1/$2.txt;done
