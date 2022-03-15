@@ -53,9 +53,20 @@
  
  ### 4. Data Ananysis 
  
-Pysparkf를 통해서 두 번째 전처리를 진행한 후에, 데이터 분석을 진행합니다. 자세한 데이터 분석은 
+Pysparkf를 통해서 두 번째 전처리를 진행한 후에, 데이터 분석을 진행합니다. 자세한 내용은 transaction_pyspark.ipynb를 확인해 주세요. 
 
 ![image](https://user-images.githubusercontent.com/53164959/158402041-737670b7-df34-424d-8b8e-af9783ce90c5.png)
+
+
+### 5. Modeling 
+
+마지막으로 Modeling을 통해서, 각 학생의 평균적인 로그인 시간(즉 수강시간)을 예측해 봅니다. 자세한 내용은 transaction_modeling.ipynb를 확인해 주세요. 
+
+
+
+### 6. Verision 
+
+아직까지 첫 버전이라서 오류가 많을거라 사료됩니다. 일을 하면서 만든  개인 적인 포트폴리오라 시간도 많이 들었고, 서툼점도 많습니다. 하지만 이것이 끝이 아니라는 지속적인 update를 통해서 더 나은 버전을 만들어 보겠습니다. 긴 글 읽어주셔서 감사합니다. 
 
   
 
