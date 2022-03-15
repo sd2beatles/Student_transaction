@@ -52,6 +52,10 @@
  
  
  ### 4. Data Ananysis 
+ 
+Pysparkf를 통해서 두 번째 전처리를 진행한 후에, 데이터 분석을 진행합니다. 자세한 데이터 분석은 
+
+![image](https://user-images.githubusercontent.com/53164959/158402041-737670b7-df34-424d-8b8e-af9783ce90c5.png)
 
   
 
