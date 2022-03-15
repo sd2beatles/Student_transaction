@@ -11,6 +11,8 @@
 - Big Data Tool: Pyspark 3.0.1
 - Workflow: Apache Airflow
 - Cloud System: AWS (S3,Dynamodb,Athena)
+- Docker
+- Jupyter Notebook
 
 
 ## 3) Method
